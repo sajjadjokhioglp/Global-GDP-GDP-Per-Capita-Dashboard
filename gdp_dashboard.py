@@ -73,10 +73,12 @@ st.markdown("""
     ::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.35); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.6); background-clip: content-box; }
 
-    /* Sidebar */
+    /* Sidebar — frosted glass panel */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, var(--bg-surface), var(--bg-base));
-        border-right: 1px solid var(--border-subtle);
+        background: linear-gradient(180deg, rgba(19,28,48,0.55), rgba(10,15,28,0.75));
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        border-right: 1px solid rgba(255,255,255,0.08);
     }
     section[data-testid="stSidebar"] .stSlider label,
     section[data-testid="stSidebar"] .stMultiSelect label,
@@ -101,33 +103,39 @@ st.markdown("""
     /* Headings */
     h1, h2, h3, h4 { color: var(--text-primary) !important; }
 
-    /* Tabs */
+    /* Tabs — frosted glass pill bar */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 6px; background: var(--bg-surface); padding: 6px; border-radius: 14px;
-        border: 1px solid var(--border-subtle); flex-wrap: nowrap; overflow-x: auto;
+        gap: 6px; background: rgba(19,28,48,0.45); backdrop-filter: blur(14px) saturate(150%);
+        -webkit-backdrop-filter: blur(14px) saturate(150%);
+        padding: 6px; border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.10); flex-wrap: nowrap; overflow-x: auto;
     }
     .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { height: 6px; }
     .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.4); border-radius: 10px; }
     .stTabs [data-baseweb="tab"] {
         flex: 0 0 auto; white-space: nowrap; height: 42px; border-radius: 10px;
-        color: var(--text-secondary); background: transparent; font-weight: 600; padding: 0 18px;
+        color: #ffffff; background: transparent; font-weight: 600; padding: 0 18px;
         transition: all 0.2s ease;
     }
+    .stTabs [data-baseweb="tab"] p { color: #ffffff !important; }
     .stTabs [data-baseweb="tab"]:hover {
-        color: var(--accent-bright); background: rgba(6,182,212,0.08);
+        color: var(--accent-bright); background: rgba(6,182,212,0.10);
     }
     .stTabs [aria-selected="true"] {
-        background: var(--bg-surface-2) !important; color: var(--accent-bright) !important;
-        box-shadow: 0 0 0 1px var(--accent-glow), 0 0 18px var(--accent-glow); border: 1px solid var(--accent);
+        background: rgba(27,39,64,0.55) !important; backdrop-filter: blur(10px);
+        color: var(--accent-bright) !important;
+        box-shadow: 0 0 0 1px var(--accent-glow), 0 0 18px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.08);
+        border: 1px solid var(--accent);
     }
     /* Tab-switch fade transition: replays whenever a tab panel remounts */
     .stTabs [data-baseweb="tab-panel"] { animation: fadeInUp 0.45s ease both; }
 
-    /* KPI metric cards */
+    /* KPI metric cards (fallback styling if native st.metric is ever used) */
     div[data-testid="stMetric"] {
-        background: linear-gradient(160deg, var(--bg-surface), var(--bg-surface-2));
-        border: 1px solid var(--border-subtle); border-radius: 16px; padding: 18px 20px;
-        box-shadow: 0 4px 18px rgba(0,0,0,0.35); transition: all 0.25s ease;
+        background: linear-gradient(160deg, rgba(19,28,48,0.45), rgba(27,39,64,0.45));
+        backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+        border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 18px 20px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06); transition: all 0.25s ease;
         overflow: visible; animation: fadeInUp 0.5s ease both;
     }
     div[data-testid="column"]:nth-of-type(1) div[data-testid="stMetric"] { animation-delay: 0.02s; }
@@ -148,42 +156,51 @@ st.markdown("""
         transition: color 0.2s ease;
     }
 
-    /* Chart cards */
+    /* Chart cards — glass panels so the page's radial background glow shows through */
     div[data-testid="stPlotlyChart"] {
-        background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 16px;
-        padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        background: linear-gradient(160deg, rgba(19,28,48,0.42), rgba(27,39,64,0.38));
+        backdrop-filter: blur(12px) saturate(140%); -webkit-backdrop-filter: blur(12px) saturate(140%);
+        border: 1px solid rgba(255,255,255,0.10); border-radius: 16px;
+        padding: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
         transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
         animation: chartDrawIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
     div[data-testid="stPlotlyChart"]:hover {
-        border-color: var(--accent); box-shadow: 0 6px 26px var(--accent-glow); transform: translateY(-3px);
+        border-color: var(--accent); box-shadow: 0 6px 30px var(--accent-glow); transform: translateY(-3px);
     }
 
     /* Insights box */
     .insights-box {
-        background: linear-gradient(135deg, rgba(6,182,212,0.10), rgba(30,41,59,0.5));
-        border: 1px solid var(--border-subtle); border-left: 4px solid var(--accent);
+        background: linear-gradient(135deg, rgba(6,182,212,0.14), rgba(27,39,64,0.35));
+        backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+        border: 1px solid rgba(255,255,255,0.12); border-left: 4px solid var(--accent);
         border-radius: 14px; padding: 20px 24px; margin-bottom: 22px;
-        backdrop-filter: blur(6px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
         animation: fadeInUp 0.5s ease both;
         transition: box-shadow 0.25s ease, border-color 0.25s ease;
     }
-    .insights-box:hover { box-shadow: 0 4px 22px rgba(6,182,212,0.15); border-left-color: var(--accent-bright); }
+    .insights-box:hover { box-shadow: 0 4px 26px rgba(6,182,212,0.22), inset 0 1px 0 rgba(255,255,255,0.08); border-left-color: var(--accent-bright); }
     .insights-box h4 { margin-top: 0; color: var(--accent-bright) !important; font-size: 1.05rem; }
     .insights-box ul { margin: 8px 0 0 0; padding-left: 20px; }
     .insights-box li { color: var(--text-primary); margin-bottom: 7px; line-height: 1.5; font-size: 0.95rem; }
     .insights-box li b { color: var(--accent-bright); }
 
-    /* Dark HTML table (Raw Data tab) */
-    .dark-table-wrapper { overflow: auto; border: 1px solid var(--border-subtle); border-radius: 12px; animation: fadeIn 0.5s ease both; }
+    /* Dark HTML table styling (kept for potential future reuse) — glass panel */
+    .dark-table-wrapper {
+        overflow: auto; border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
+        background: rgba(19,28,48,0.35); backdrop-filter: blur(12px) saturate(140%);
+        -webkit-backdrop-filter: blur(12px) saturate(140%);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+        animation: fadeIn 0.5s ease both; padding: 4px;
+    }
     table.dark-table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
     table.dark-table thead th {
-        position: sticky; top: 0; background: var(--bg-surface-2); color: var(--accent-bright);
+        position: sticky; top: 0; background: rgba(27,39,64,0.85); backdrop-filter: blur(8px); color: var(--accent-bright);
         text-align: left; padding: 10px 14px; border-bottom: 2px solid var(--accent); z-index: 1;
         text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.04em;
     }
-    table.dark-table tbody td { padding: 8px 14px; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease; }
-    table.dark-table tbody tr:hover { background: var(--bg-surface-2); }
+    table.dark-table tbody td { padding: 8px 14px; color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.15s ease; }
+    table.dark-table tbody tr:hover { background: rgba(6,182,212,0.08); }
 
     /* Multiselect chips */
     span[data-baseweb="tag"] {
@@ -354,12 +371,15 @@ def animated_metric(label, numeric=None, value=None, prefix="", suffix="", mode=
             @keyframes fadeInUp {{ from {{opacity:0; transform:translateY(14px);}} to {{opacity:1; transform:translateY(0);}} }}
             html, body {{ margin:0; padding:0; background:transparent; }}
             .kpi-card {{
-                font-family:'Inter',sans-serif; background:linear-gradient(160deg,#131c30,#1b2740);
-                border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px 20px;
-                box-shadow:0 4px 18px rgba(0,0,0,0.35); animation: fadeInUp 0.5s ease both;
+                font-family:'Inter',sans-serif;
+                background:linear-gradient(160deg, rgba(19,28,48,0.5), rgba(27,39,64,0.4));
+                backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+                border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:18px 20px;
+                box-shadow:0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07);
+                animation: fadeInUp 0.5s ease both;
                 transition: all 0.25s ease; box-sizing:border-box; height:100px;
             }}
-            .kpi-card:hover {{ border-color:#06b6d4; box-shadow:0 6px 28px rgba(6,182,212,0.35); transform:translateY(-4px) scale(1.01); }}
+            .kpi-card:hover {{ border-color:#06b6d4; box-shadow:0 6px 28px rgba(6,182,212,0.35), inset 0 1px 0 rgba(255,255,255,0.1); transform:translateY(-4px) scale(1.01); }}
             .kpi-label {{ color:#94a3b8; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.05em; font-weight:600; margin-bottom:6px; }}
             .kpi-value {{ color:#22d3ee; font-size:1.6rem; font-weight:700; line-height:1.25; word-break:break-word; }}
         </style>
@@ -387,7 +407,7 @@ if _logo_path:
     _ext = "png" if _logo_path.lower().endswith("png") else "jpeg"
     _logo_html = f'<div style="background:#ffffff; padding:8px 10px; border-radius:14px; box-shadow:0 6px 20px rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; display:flex; align-items:center; animation: softPulse 3.5s ease-in-out infinite;"><img src="data:image/{_ext};base64,{_logo_b64}" style="height:58px; display:block; border-radius:4px;"></div>'
 
-_header_html = f'<div style="display:flex; align-items:center; gap:20px; margin-bottom:4px; animation: fadeInUp 0.6s ease both;">{_logo_html}<div><h1 style="font-weight:700; color:#f1f5f9; margin:0; line-height:1.2; font-size:2.2rem;">🌐 Global GDP &amp; GDP Per Capita Dashboard</h1></div></div>'
+_header_html = f'<div style="display:flex; align-items:center; gap:20px; margin-bottom:4px; padding:16px 22px; border-radius:18px; background:linear-gradient(135deg, rgba(19,28,48,0.45), rgba(27,39,64,0.35)); backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06); animation: fadeInUp 0.6s ease both;">{_logo_html}<div><h1 style="font-weight:700; color:#f1f5f9; margin:0; line-height:1.2; font-size:2.2rem;">🌐 Global GDP &amp; GDP Per Capita Dashboard</h1></div></div>'
 st.markdown(_header_html, unsafe_allow_html=True)
 _subtitle_placeholder = st.empty()
 _subtitle_placeholder.markdown(
@@ -433,6 +453,7 @@ gdp_range_b = st.sidebar.slider(
 gdppc_range_k = st.sidebar.slider(
     "GDP Per Capita Range (US$ Thousands)", 0.0, gdppc_hi_k, (0.0, gdppc_hi_k), format="%.1f"
 )
+st.sidebar.caption(f"${gdppc_range_k[0]*1000:,.0f}  –  ${gdppc_range_k[1]*1000:,.0f}")
 
 # Convert back to raw units for filtering
 gdp_range = (gdp_range_b[0] * 1_000_000_000, gdp_range_b[1] * 1_000_000_000)
@@ -474,8 +495,8 @@ earliest_slice = fdf[fdf["Year"] == earliest_year]
 # =========================================================================
 # TABS
 # =========================================================================
-tab_overview, tab_gdp, tab_pc, tab_regional, tab_country, tab_raw = st.tabs([
-    "🌍 Overview", "💰 GDP Analysis", "👤 GDP Per Capita", "🗺️ Regional & Income", "🔎 Country Deep Dive", "📄 Raw Data"
+tab_overview, tab_gdp, tab_pc, tab_regional, tab_country = st.tabs([
+    "🌍 Overview", "💰 GDP Analysis", "👤 GDP Per Capita", "🗺️ Regional & Income", "🔎 Country Deep Dive"
 ])
 
 # -------------------------------------------------------------------------
@@ -723,19 +744,3 @@ with tab_country:
                  color_continuous_scale=CONTINUOUS_SCALE)
     fig.add_hline(y=0, line_dash="dot", line_color="rgba(148,163,184,0.4)")
     st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_20")
-
-# -------------------------------------------------------------------------
-# TAB 6 — RAW DATA
-# -------------------------------------------------------------------------
-with tab_raw:
-    st.markdown("#### Filtered Dataset")
-    st.caption(f"Showing {len(fdf):,} rows matching the current sidebar filters.")
-    display_cols = ["Country Name", "Region", "IncomeGroup", "Year", "GDP", "GDP Per Capita"]
-    render_dark_table(fdf[display_cols].sort_values(["Country Name", "Year"]), max_height=550)
-
-    st.download_button(
-        "⬇️ Download filtered data as CSV",
-        data=fdf[display_cols].to_csv(index=False).encode("utf-8"),
-        file_name="filtered_world_gdp_data.csv",
-        mime="text/csv",
-    )
