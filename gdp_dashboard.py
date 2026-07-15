@@ -502,6 +502,35 @@ earliest_slice = fdf[fdf["Year"] == earliest_year]
 # =========================================================================
 # TABS
 # =========================================================================
+components.html("""
+<script>
+(function() {
+    function paintTabs() {
+        try {
+            var doc = window.parent.document;
+            var tabs = doc.querySelectorAll('[data-baseweb="tab"]');
+            tabs.forEach(function(tab) {
+                var isSelected = tab.getAttribute('aria-selected') === 'true';
+                var color = isSelected ? '#22d3ee' : '#ffffff';
+                tab.style.setProperty('color', color, 'important');
+                var descendants = tab.querySelectorAll('*');
+                descendants.forEach(function(el) {
+                    el.style.setProperty('color', color, 'important');
+                });
+            });
+        } catch (e) {}
+    }
+    paintTabs();
+    try {
+        var target = window.parent.document.body;
+        var observer = new MutationObserver(function() { paintTabs(); });
+        observer.observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected', 'class'] });
+    } catch (e) {}
+    setInterval(paintTabs, 600);
+})();
+</script>
+""", height=0)
+
 tab_overview, tab_gdp, tab_pc, tab_regional, tab_country = st.tabs([
     "🌍 Overview", "💰 GDP Analysis", "👤 GDP Per Capita", "🗺️ Regional & Income", "🔎 Country Deep Dive"
 ])
