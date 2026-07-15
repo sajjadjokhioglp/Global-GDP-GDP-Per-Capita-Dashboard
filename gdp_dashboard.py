@@ -137,6 +137,10 @@ st.markdown("""
     /* Tab-switch fade transition: replays whenever a tab panel remounts */
     .stTabs [data-baseweb="tab-panel"] { animation: fadeInUp 0.45s ease both; }
 
+    /* Direct override for Streamlit Cloud's generated emotion-cache class on tab labels */
+    .st-emotion-cache-15okssx { color: #ffffff !important; }
+    .stTabs [aria-selected="true"] .st-emotion-cache-15okssx { color: var(--accent-bright) !important; }
+
     /* KPI metric cards (fallback styling if native st.metric is ever used) */
     div[data-testid="stMetric"] {
         background: linear-gradient(160deg, rgba(19,28,48,0.45), rgba(27,39,64,0.45));
