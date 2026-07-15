@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 # =========================================================================
 # PAGE CONFIG
 # =========================================================================
-st.set_page_config(page_title="Global GDP Dashboard", page_icon="🌐", layout="wide")
+st.set_page_config(page_title="Global GDP Per Capita Dashboard", page_icon="👤", layout="wide")
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -233,15 +233,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================================================================
-# DATA LOADING
+# DATA LOADING — GDP Per Capita only (no total-GDP data in this build)
 # =========================================================================
 def _find_data_file():
-    candidates = glob.glob(os.path.join(SCRIPT_DIR, "data", "*GDP*.xlsx")) + \
+    candidates = glob.glob(os.path.join(SCRIPT_DIR, "data", "*Per_Capita*.xlsx")) + \
+                 glob.glob(os.path.join(SCRIPT_DIR, "*Per_Capita*.xlsx")) + \
+                 glob.glob(os.path.join(SCRIPT_DIR, "data", "*GDP*.xlsx")) + \
                  glob.glob(os.path.join(SCRIPT_DIR, "*GDP*.xlsx"))
-    data_file = next((f for f in candidates if "world_gdp_data" in os.path.basename(f).lower()), None)
-    if data_file is None and candidates:
-        data_file = candidates[0]
-    return data_file
+    return candidates[0] if candidates else None
 
 
 @st.cache_data
@@ -254,14 +253,14 @@ def load_data(data_file, _mtime):
     df.columns = df.columns.str.strip()
     df["IncomeGroup"] = df["IncomeGroup"].fillna("Unclassified")
     df["Year"] = df["Year"].astype(int)
-    df["GDP"] = pd.to_numeric(df["GDP"], errors="coerce")
     df["GDP Per Capita"] = pd.to_numeric(df["GDP Per Capita"], errors="coerce")
+    df = df.dropna(subset=["GDP Per Capita"])
     return df
 
 
 _data_file = _find_data_file()
 if _data_file is None:
-    st.error("Could not locate the World_GDP_Data.xlsx data file. Please make sure it sits alongside this script (or in a 'data' subfolder).")
+    st.error("Could not locate the GDP Per Capita data file. Please make sure it sits alongside this script (or in a 'data' subfolder).")
     st.stop()
 
 df_full = load_data(_data_file, os.path.getmtime(_data_file))
@@ -270,7 +269,7 @@ df_full = load_data(_data_file, os.path.getmtime(_data_file))
 # HELPERS
 # =========================================================================
 def fmt_compact(n, prefix="$"):
-    """Format large numbers compactly (e.g. 2,736,094,000,000 -> '$2.74T') for KPI cards."""
+    """Format large numbers compactly (e.g. 2,736,094 -> '$2.74M') for KPI cards."""
     if pd.isna(n):
         return "N/A"
     n = float(n)
@@ -316,18 +315,6 @@ def style_fig(fig, legend=True, height=440):
     if fig.layout.coloraxis is not None:
         fig.update_layout(coloraxis_colorbar=dict(tickfont=dict(color="#94a3b8"), title_font=dict(color="#cbd5e1")))
     return fig
-
-
-def render_dark_table(display_df, max_height=520):
-    """Render a dataframe as a custom dark-themed HTML table (st.dataframe can't be restyled)."""
-    d = display_df.copy()
-    for col in d.select_dtypes(include=[np.number]).columns:
-        if col == "Year":
-            d[col] = d[col].map(lambda v: f"{int(v)}" if pd.notna(v) else "")
-        else:
-            d[col] = d[col].map(lambda v: f"{v:,.2f}".rstrip('0').rstrip('.') if pd.notna(v) else "")
-    html = d.to_html(classes="dark-table", index=False, border=0, escape=True)
-    st.markdown(f'<div class="dark-table-wrapper" style="max-height:{max_height}px;">{html}</div>', unsafe_allow_html=True)
 
 
 def insights_box(title, points):
@@ -392,15 +379,12 @@ def animated_metric(label, numeric=None, value=None, prefix="", suffix="", mode=
             @keyframes fadeInUp {{ from {{opacity:0; transform:translateY(14px);}} to {{opacity:1; transform:translateY(0);}} }}
             html, body {{ margin:0; padding:0; background:transparent; }}
             .kpi-card {{
-                font-family:'Inter',sans-serif;
-                background:linear-gradient(160deg, rgba(19,28,48,0.5), rgba(27,39,64,0.4));
-                backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
-                border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:18px 20px;
-                box-shadow:0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07);
-                animation: fadeInUp 0.5s ease both;
+                font-family:'Inter',sans-serif; background:linear-gradient(160deg,#131c30,#1b2740);
+                border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px 20px;
+                box-shadow:0 4px 18px rgba(0,0,0,0.35); animation: fadeInUp 0.5s ease both;
                 transition: all 0.25s ease; box-sizing:border-box; height:100px;
             }}
-            .kpi-card:hover {{ border-color:#06b6d4; box-shadow:0 6px 28px rgba(6,182,212,0.35), inset 0 1px 0 rgba(255,255,255,0.1); transform:translateY(-4px) scale(1.01); }}
+            .kpi-card:hover {{ border-color:#06b6d4; box-shadow:0 6px 28px rgba(6,182,212,0.35); transform:translateY(-4px) scale(1.01); }}
             .kpi-label {{ color:#94a3b8; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.05em; font-weight:600; margin-bottom:6px; }}
             .kpi-value {{ color:#22d3ee; font-size:1.6rem; font-weight:700; line-height:1.25; word-break:break-word; }}
         </style>
@@ -428,16 +412,16 @@ if _logo_path:
     _ext = "png" if _logo_path.lower().endswith("png") else "jpeg"
     _logo_html = f'<div style="background:#ffffff; padding:8px 10px; border-radius:14px; box-shadow:0 6px 20px rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; display:flex; align-items:center; animation: softPulse 3.5s ease-in-out infinite;"><img src="data:image/{_ext};base64,{_logo_b64}" style="height:58px; display:block; border-radius:4px;"></div>'
 
-_header_html = f'<div style="display:flex; align-items:center; gap:20px; margin-bottom:4px; padding:16px 22px; border-radius:18px; background:linear-gradient(135deg, rgba(19,28,48,0.45), rgba(27,39,64,0.35)); backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06); animation: fadeInUp 0.6s ease both;">{_logo_html}<div><h1 style="font-weight:700; color:#f1f5f9; margin:0; line-height:1.2; font-size:2.2rem;">🌐 Global GDP &amp; GDP Per Capita Dashboard</h1></div></div>'
+_header_html = f'<div style="display:flex; align-items:center; gap:20px; margin-bottom:4px; padding:16px 22px; border-radius:18px; background:linear-gradient(135deg, rgba(19,28,48,0.45), rgba(27,39,64,0.35)); backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06); animation: fadeInUp 0.6s ease both;">{_logo_html}<div><h1 style="font-weight:700; color:#f1f5f9; margin:0; line-height:1.2; font-size:2.2rem;">👤 Global GDP Per Capita Dashboard</h1></div></div>'
 st.markdown(_header_html, unsafe_allow_html=True)
 _subtitle_placeholder = st.empty()
 _subtitle_placeholder.markdown(
-    "<p style='font-size:16px; margin-top:-6px; margin-bottom:26px;'><span style='color:#e2e8f0; opacity:0.65;'>World Bank national accounts data · 211 countries · 1960–2023</span></p>",
+    "<p style='font-size:16px; margin-top:-6px; margin-bottom:26px;'><span style='color:#e2e8f0; opacity:0.65;'>World Bank national accounts data · GDP per capita (current US$) · 1960–2025</span></p>",
     unsafe_allow_html=True
 )
 
 # =========================================================================
-# SIDEBAR — cascading filters + numeric range sliders
+# SIDEBAR — cascading filters + numeric range slider
 # =========================================================================
 if _logo_path:
     st.sidebar.image(_logo_path, use_container_width=True)
@@ -461,23 +445,14 @@ all_countries = sorted(income_scope["Country Name"].dropna().unique().tolist())
 sel_countries = st.sidebar.multiselect("Country", all_countries, default=[])
 
 st.sidebar.markdown("---")
-gdp_lo, gdp_hi = float(df_full["GDP"].min()), float(df_full["GDP"].max())
-gdppc_lo, gdppc_hi = float(df_full["GDP Per Capita"].min()), float(df_full["GDP Per Capita"].max())
-
-gdp_hi_b = gdp_hi / 1_000_000_000       # display in US$ Billions
-gdppc_hi_k = gdppc_hi / 1_000           # display in US$ Thousands
-
-gdp_range_b = st.sidebar.slider(
-    "GDP Range (US$ Billions)", 0.0, gdp_hi_b, (0.0, gdp_hi_b), format="%.0f"
-)
+gdppc_hi = float(df_full["GDP Per Capita"].max())
+gdppc_hi_k = gdppc_hi / 1_000  # display in US$ Thousands
 
 gdppc_range_k = st.sidebar.slider(
     "GDP Per Capita Range (US$ Thousands)", 0.0, gdppc_hi_k, (0.0, gdppc_hi_k), format="%.1f"
 )
 st.sidebar.caption(f"${gdppc_range_k[0]*1000:,.0f}  –  ${gdppc_range_k[1]*1000:,.0f}")
 
-# Convert back to raw units for filtering
-gdp_range = (gdp_range_b[0] * 1_000_000_000, gdp_range_b[1] * 1_000_000_000)
 gdppc_range = (gdppc_range_k[0] * 1_000, gdppc_range_k[1] * 1_000)
 
 # Apply filters
@@ -488,7 +463,6 @@ if sel_income:
     mask &= df_full["IncomeGroup"].isin(sel_income)
 if sel_countries:
     mask &= df_full["Country Name"].isin(sel_countries)
-mask &= df_full["GDP"].between(gdp_range[0], gdp_range[1])
 mask &= df_full["GDP Per Capita"].between(gdppc_range[0], gdppc_range[1])
 
 fdf = df_full[mask].copy()
@@ -553,54 +527,52 @@ tab_overview, tab_gdp, tab_pc, tab_regional, tab_country = st.tabs([
 # TAB 1 — OVERVIEW
 # -------------------------------------------------------------------------
 with tab_overview:
-    total_gdp_latest = latest_slice["GDP"].sum()
-    total_gdp_earliest = earliest_slice["GDP"].sum()
-    growth_pct = ((total_gdp_latest - total_gdp_earliest) / total_gdp_earliest * 100) if total_gdp_earliest else np.nan
-    avg_gdppc_latest = latest_slice["GDP Per Capita"].mean()
-    top_country_row = latest_slice.loc[latest_slice["GDP"].idxmax()] if not latest_slice.empty else None
+    avg_pc_latest = latest_slice["GDP Per Capita"].mean()
+    avg_pc_earliest = earliest_slice["GDP Per Capita"].mean()
+    growth_pct = ((avg_pc_latest - avg_pc_earliest) / avg_pc_earliest * 100) if avg_pc_earliest else np.nan
+    top_country_row = latest_slice.loc[latest_slice["GDP Per Capita"].idxmax()] if not latest_slice.empty else None
     n_countries = fdf["Country Name"].nunique()
+    top_region_pc = latest_slice.groupby("Region")["GDP Per Capita"].mean().idxmax() if not latest_slice.empty else "N/A"
 
-    top_region_gdp = latest_slice.groupby("Region")["GDP"].sum().idxmax() if not latest_slice.empty else "N/A"
-
-    insights_box(f"Dynamic Key Findings — Overview ({earliest_year}–{latest_year})", [
-        f"Combined GDP across the <b>{n_countries}</b> selected countries reached <b>{fmt_compact(total_gdp_latest)}</b> in {latest_year}, "
+    insights_box(f"Dynamic Key Findings — Overview ({year_range[0]}–{year_range[1]})", [
+        f"Average GDP per capita across the <b>{n_countries}</b> selected countries reached <b>{fmt_compact(avg_pc_latest)}</b> in {latest_year}, "
         f"{'up' if growth_pct >= 0 else 'down'} <b>{abs(growth_pct):.1f}%</b> from {earliest_year}.",
-        f"<b>{top_country_row['Country Name'] if top_country_row is not None else 'N/A'}</b> holds the largest economy in the selection at "
-        f"<b>{fmt_compact(top_country_row['GDP']) if top_country_row is not None else 'N/A'}</b> in {latest_year}.",
-        f"The average GDP per capita across selected countries was <b>{fmt_compact(avg_gdppc_latest, prefix='$')}</b> in {latest_year}.",
-        f"<b>{top_region_gdp}</b> is the largest contributor to combined GDP among the regions currently in view.",
-        f"Between {earliest_year} and {latest_year}, {(fdf.groupby('Country Name')['GDP'].apply(lambda s: s.iloc[-1] > s.iloc[0] if len(s) > 1 else False)).mean()*100:.0f}% of countries saw their GDP grow.",
+        f"<b>{top_country_row['Country Name'] if top_country_row is not None else 'N/A'}</b> has the highest GDP per capita in the selection at "
+        f"<b>{fmt_compact(top_country_row['GDP Per Capita']) if top_country_row is not None else 'N/A'}</b> in {latest_year}.",
+        f"<b>{top_region_pc}</b> has the highest average GDP per capita among the regions currently in view.",
+        f"Between {earliest_year} and {latest_year}, {(fdf.groupby('Country Name')['GDP Per Capita'].apply(lambda s: s.iloc[-1] > s.iloc[0] if len(s) > 1 else False)).mean()*100:.0f}% of countries saw their GDP per capita grow.",
+        f"Median GDP per capita in {latest_year} stands at <b>{fmt_compact(latest_slice['GDP Per Capita'].median())}</b>.",
         f"Income-group mix in the current selection: {', '.join(f'{k} ({v})' for k, v in latest_slice['IncomeGroup'].value_counts().items())}.",
     ])
 
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        animated_metric(f"Total GDP ({latest_year})", numeric=total_gdp_latest, prefix="$", mode="compact")
+        animated_metric(f"Avg GDP / Capita ({latest_year})", numeric=avg_pc_latest, prefix="$", mode="compact")
     with k2:
-        animated_metric(f"Avg GDP / Capita ({latest_year})", numeric=avg_gdppc_latest, prefix="$", mode="compact")
+        animated_metric(f"Top Country ({latest_year})", value=(top_country_row['Country Name'] if top_country_row is not None else "N/A"))
     with k3:
         animated_metric("Countries in View", numeric=n_countries, mode="int")
     with k4:
         animated_metric(f"Growth since {earliest_year}", numeric=growth_pct, mode="percent", suffix="%")
 
-    world_trend = fdf.groupby("Year", as_index=False)["GDP"].sum()
-    fig = px.area(world_trend, x="Year", y="GDP", title="Combined GDP Over Time", color_discrete_sequence=[PALETTE[0]])
+    avg_trend = fdf.groupby("Year", as_index=False)["GDP Per Capita"].mean()
+    fig = px.area(avg_trend, x="Year", y="GDP Per Capita", title="Average GDP Per Capita Over Time", color_discrete_sequence=[PALETTE[0]])
     fig.update_traces(line=dict(width=2.5), fillcolor="rgba(6,182,212,0.18)")
     st.plotly_chart(style_fig(fig, height=480), use_container_width=True, key="chart_1")
 
-    region_share = latest_slice.groupby("Region", as_index=False)["GDP"].sum()
-    fig = px.pie(region_share, names="Region", values="GDP", hole=0.55, title=f"GDP Share by Region ({latest_year})",
+    region_share = latest_slice.groupby("Region", as_index=False)["GDP Per Capita"].mean()
+    fig = px.pie(region_share, names="Region", values="GDP Per Capita", hole=0.55, title=f"Average GDP Per Capita Share by Region ({latest_year})",
                  color_discrete_sequence=PALETTE)
     fig.update_traces(textposition="inside", textinfo="percent+label")
     st.plotly_chart(style_fig(fig, height=480), use_container_width=True, key="chart_2")
 
-    top10 = latest_slice.nlargest(10, "GDP")
-    fig = px.treemap(top10, path=[px.Constant("World"), "Region", "Country Name"], values="GDP",
-                      color="GDP", color_continuous_scale=CONTINUOUS_SCALE, title=f"Top 10 Economies — Treemap ({latest_year})")
+    top10 = latest_slice.nlargest(10, "GDP Per Capita")
+    fig = px.treemap(top10, path=[px.Constant("World"), "Region", "Country Name"], values="GDP Per Capita",
+                      color="GDP Per Capita", color_continuous_scale=CONTINUOUS_SCALE, title=f"Top 10 by GDP Per Capita — Treemap ({latest_year})")
     st.plotly_chart(style_fig(fig, legend=False, height=500), use_container_width=True, key="chart_3")
 
-    funnel_df = latest_slice.groupby("IncomeGroup", as_index=False)["GDP"].sum().sort_values("GDP", ascending=False)
-    fig = px.funnel(funnel_df, x="GDP", y="IncomeGroup", title=f"GDP Funnel by Income Group ({latest_year})",
+    funnel_df = latest_slice.groupby("IncomeGroup", as_index=False)["GDP Per Capita"].mean().sort_values("GDP Per Capita", ascending=False)
+    fig = px.funnel(funnel_df, x="GDP Per Capita", y="IncomeGroup", title=f"Average GDP Per Capita by Income Group ({latest_year})",
                     color="IncomeGroup", color_discrete_sequence=PALETTE)
     st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_4")
 
@@ -608,14 +580,14 @@ with tab_overview:
 # TAB 2 — GDP ANALYSIS
 # -------------------------------------------------------------------------
 with tab_gdp:
-    growth_series = fdf.groupby("Year", as_index=False)["GDP"].sum().sort_values("Year")
-    growth_series["pct_change"] = growth_series["GDP"].pct_change() * 100
+    growth_series = fdf.groupby("Year", as_index=False)["GDP Per Capita"].mean().sort_values("Year")
+    growth_series["pct_change"] = growth_series["GDP Per Capita"].pct_change() * 100
     avg_annual_growth = growth_series["pct_change"].mean()
-    top5 = latest_slice.nlargest(5, "GDP")
-    bottom5 = latest_slice.nsmallest(5, "GDP")
+    top5 = latest_slice.nlargest(5, "GDP Per Capita")
+    bottom5 = latest_slice.nsmallest(5, "GDP Per Capita")
     fastest_growth = (
         fdf[fdf["Year"].isin([earliest_year, latest_year])]
-        .pivot_table(index="Country Name", columns="Year", values="GDP")
+        .pivot_table(index="Country Name", columns="Year", values="GDP Per Capita")
         .dropna()
     )
     fastest_growth_country = "N/A"
@@ -623,36 +595,31 @@ with tab_gdp:
         fastest_growth["growth"] = (fastest_growth[latest_year] - fastest_growth[earliest_year]) / fastest_growth[earliest_year] * 100
         fastest_growth_country = fastest_growth["growth"].idxmax()
 
-    insights_box("Dynamic Key Findings — GDP Analysis", [
-        f"The <b>top 5</b> economies in {latest_year} are: {', '.join(top5['Country Name'].tolist())}.",
-        f"Combined GDP grew at an average of <b>{avg_annual_growth:.1f}%</b> per year across the selected window.",
-        f"<b>{fastest_growth_country}</b> posted the fastest cumulative GDP growth between {earliest_year} and {latest_year} among fully-observed countries.",
-        f"The smallest economies currently in view include: {', '.join(bottom5['Country Name'].tolist())}.",
-        f"GDP is heavily concentrated: the top 5 countries account for <b>{(top5['GDP'].sum() / latest_slice['GDP'].sum() * 100):.1f}%</b> of total selected GDP in {latest_year}.",
-        f"Median country GDP in {latest_year} stands at <b>{fmt_compact(latest_slice['GDP'].median())}</b>.",
+    insights_box(f"Dynamic Key Findings — GDP Analysis ({earliest_year}–{latest_year})", [
+        f"The <b>top 5</b> countries by GDP per capita in {latest_year} are: {', '.join(top5['Country Name'].tolist())}.",
+        f"Average GDP per capita grew at <b>{avg_annual_growth:.1f}%</b> per year across the selected window.",
+        f"<b>{fastest_growth_country}</b> posted the fastest cumulative GDP-per-capita growth between {earliest_year} and {latest_year} among fully-observed countries.",
+        f"The lowest GDP-per-capita countries currently in view include: {', '.join(bottom5['Country Name'].tolist())}.",
+        f"The gap between the top 5 and bottom 5 average GDP per capita is roughly <b>{(top5['GDP Per Capita'].mean() / bottom5['GDP Per Capita'].mean()):,.0f}×</b> in {latest_year}.",
+        f"Median GDP per capita in {latest_year} stands at <b>{fmt_compact(latest_slice['GDP Per Capita'].median())}</b>.",
     ])
 
-    top15 = latest_slice.nlargest(15, "GDP").sort_values("GDP")
-    fig = px.bar(top15, x="GDP", y="Country Name", orientation="h", color="GDP",
-                 color_continuous_scale=CONTINUOUS_SCALE, title=f"Top 15 Economies by GDP ({latest_year})")
+    top15 = latest_slice.nlargest(15, "GDP Per Capita").sort_values("GDP Per Capita")
+    fig = px.bar(top15, x="GDP Per Capita", y="Country Name", orientation="h", color="GDP Per Capita",
+                 color_continuous_scale=CONTINUOUS_SCALE, title=f"Top 15 Countries by GDP Per Capita ({latest_year})")
     st.plotly_chart(style_fig(fig, legend=False, height=560), use_container_width=True, key="chart_5")
 
     multi_country = sel_countries if sel_countries else top5["Country Name"].tolist()
     trend_df = fdf[fdf["Country Name"].isin(multi_country)]
-    fig = px.line(trend_df, x="Year", y="GDP", color="Country Name", markers=True,
-                  color_discrete_sequence=PALETTE, title="GDP Trend Over Time")
+    fig = px.line(trend_df, x="Year", y="GDP Per Capita", color="Country Name", markers=True,
+                  color_discrete_sequence=PALETTE, title="GDP Per Capita Trend Over Time")
     st.plotly_chart(style_fig(fig, height=480), use_container_width=True, key="chart_6")
 
-    fig = px.line(growth_series, x="Year", y="pct_change", title="Year-over-Year Combined GDP Growth (%)",
+    fig = px.line(growth_series, x="Year", y="pct_change", title="Year-over-Year Average GDP Per Capita Growth (%)",
                   color_discrete_sequence=[PALETTE[3]])
     fig.update_traces(line=dict(width=2.5))
     fig.add_hline(y=0, line_dash="dot", line_color="rgba(148,163,184,0.4)")
     st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_7")
-
-    fig = px.scatter(latest_slice, x="GDP", y="GDP Per Capita", size="GDP", color="Region",
-                      hover_name="Country Name", log_x=True, color_discrete_sequence=PALETTE,
-                      title=f"GDP vs GDP Per Capita ({latest_year})")
-    st.plotly_chart(style_fig(fig, height=500), use_container_width=True, key="chart_8")
 
 # -------------------------------------------------------------------------
 # TAB 3 — GDP PER CAPITA
@@ -664,7 +631,7 @@ with tab_pc:
     pc_gap = top_pc["GDP Per Capita"].iloc[0] / bottom_pc["GDP Per Capita"].iloc[0] if not bottom_pc.empty else np.nan
     global_median_pc = latest_slice["GDP Per Capita"].median()
 
-    insights_box("Dynamic Key Findings — GDP Per Capita", [
+    insights_box(f"Dynamic Key Findings — GDP Per Capita ({latest_year})", [
         f"<b>{top_pc.iloc[0]['Country Name']}</b> leads on GDP per capita at <b>{fmt_compact(top_pc.iloc[0]['GDP Per Capita'])}</b> in {latest_year}.",
         f"<b>{region_avg_pc.index[0]}</b> has the highest average GDP per capita among regions at <b>{fmt_compact(region_avg_pc.iloc[0])}</b>.",
         f"The gap between the richest and poorest countries in view is roughly <b>{pc_gap:,.0f}×</b> in per-capita terms.",
@@ -676,7 +643,7 @@ with tab_pc:
 
     fig = px.bar_polar(top_pc, r="GDP Per Capita", theta="Country Name", color="GDP Per Capita",
                         color_continuous_scale=CONTINUOUS_SCALE, title=f"Top 10 GDP Per Capita — Radial View ({latest_year})")
-    st.plotly_chart(style_fig(fig, legend=False, height=520), use_container_width=True, key="chart_9")
+    st.plotly_chart(style_fig(fig, legend=False, height=520), use_container_width=True, key="chart_8")
 
     radar_df = region_avg_pc.reset_index()
     fig = go.Figure()
@@ -686,111 +653,95 @@ with tab_pc:
         radialaxis=dict(showticklabels=True, gridcolor="rgba(148,163,184,0.15)"),
         angularaxis=dict(gridcolor="rgba(148,163,184,0.15)"), bgcolor="rgba(0,0,0,0)"
     ))
-    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_10")
+    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_9")
 
     fig = px.violin(latest_slice, x="IncomeGroup", y="GDP Per Capita", color="IncomeGroup", box=True,
                      color_discrete_sequence=PALETTE, title=f"GDP Per Capita Distribution by Income Group ({latest_year})")
-    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_11")
-
-    pc_trend = fdf.groupby("Year", as_index=False)["GDP Per Capita"].mean()
-    fig = px.area(pc_trend, x="Year", y="GDP Per Capita", title="Average GDP Per Capita Over Time",
-                  color_discrete_sequence=[PALETTE[2]])
-    fig.update_traces(fillcolor="rgba(139,92,246,0.18)")
-    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_12")
+    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_10")
 
 # -------------------------------------------------------------------------
 # TAB 4 — REGIONAL & INCOME COMPARISON
 # -------------------------------------------------------------------------
 with tab_regional:
-    region_gdp = latest_slice.groupby("Region", as_index=False)["GDP"].sum().sort_values("GDP", ascending=False)
-    income_gdp = latest_slice.groupby("IncomeGroup", as_index=False)["GDP"].sum().sort_values("GDP", ascending=False)
-    largest_region = region_gdp.iloc[0]
-    smallest_region = region_gdp.iloc[-1]
+    region_avg = latest_slice.groupby("Region", as_index=False)["GDP Per Capita"].mean().sort_values("GDP Per Capita", ascending=False)
+    income_avg = latest_slice.groupby("IncomeGroup", as_index=False)["GDP Per Capita"].mean().sort_values("GDP Per Capita", ascending=False)
+    largest_region = region_avg.iloc[0]
+    smallest_region = region_avg.iloc[-1]
     n_high_income = latest_slice[latest_slice.IncomeGroup == "High income"]["Country Name"].nunique()
     n_low_income = latest_slice[latest_slice.IncomeGroup == "Low income"]["Country Name"].nunique()
     region_country_counts = latest_slice.groupby("Region")["Country Name"].nunique()
 
-    insights_box("Dynamic Key Findings — Regional & Income Comparison", [
-        f"<b>{largest_region['Region']}</b> is the largest region by combined GDP at <b>{fmt_compact(largest_region['GDP'])}</b> in {latest_year}.",
-        f"<b>{smallest_region['Region']}</b> has the smallest combined GDP among regions in view, at <b>{fmt_compact(smallest_region['GDP'])}</b>.",
+    insights_box(f"Dynamic Key Findings — Regional & Income Comparison ({latest_year})", [
+        f"<b>{largest_region['Region']}</b> has the highest average GDP per capita at <b>{fmt_compact(largest_region['GDP Per Capita'])}</b> in {latest_year}.",
+        f"<b>{smallest_region['Region']}</b> has the lowest average GDP per capita among regions in view, at <b>{fmt_compact(smallest_region['GDP Per Capita'])}</b>.",
         f"<b>{n_high_income}</b> high-income and <b>{n_low_income}</b> low-income countries are represented in the current selection.",
-        f"Income-group GDP ranking (largest to smallest): {', '.join(income_gdp['IncomeGroup'].tolist())}.",
+        f"Income-group ranking by average GDP per capita (highest to lowest): {', '.join(income_avg['IncomeGroup'].tolist())}.",
         f"<b>{region_country_counts.idxmax()}</b> contributes the most countries to the current filter ({region_country_counts.max()}).",
-        f"Regional GDP concentration: the top region alone accounts for <b>{(largest_region['GDP']/region_gdp['GDP'].sum()*100):.1f}%</b> of combined GDP.",
+        f"High-income countries average <b>{fmt_compact(latest_slice[latest_slice.IncomeGroup=='High income']['GDP Per Capita'].mean())}</b> per capita, "
+        f"versus <b>{fmt_compact(latest_slice[latest_slice.IncomeGroup=='Low income']['GDP Per Capita'].mean())}</b> for low-income countries.",
     ])
 
-    fig = px.bar(region_gdp, x="Region", y="GDP", color="GDP", color_continuous_scale=CONTINUOUS_SCALE,
-                 title=f"Total GDP by Region ({latest_year})")
+    fig = px.bar(region_avg, x="Region", y="GDP Per Capita", color="GDP Per Capita", color_continuous_scale=CONTINUOUS_SCALE,
+                 title=f"Average GDP Per Capita by Region ({latest_year})")
     fig.update_xaxes(tickangle=-25)
-    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_13")
+    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_11")
 
-    fig = px.funnel(income_gdp, x="GDP", y="IncomeGroup", title=f"GDP Funnel by Income Group ({latest_year})",
+    fig = px.funnel(income_avg, x="GDP Per Capita", y="IncomeGroup", title=f"Average GDP Per Capita by Income Group ({latest_year})",
                     color="IncomeGroup", color_discrete_sequence=PALETTE)
-    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_14")
+    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_12")
 
-    region_trend = fdf.groupby(["Year", "Region"], as_index=False)["GDP"].sum()
-    fig = px.area(region_trend, x="Year", y="GDP", color="Region", color_discrete_sequence=PALETTE,
-                  title="Regional GDP Over Time (Stacked)")
-    st.plotly_chart(style_fig(fig, height=500), use_container_width=True, key="chart_15")
-
-    fig = px.treemap(latest_slice, path=[px.Constant("World"), "IncomeGroup", "Region"], values="GDP",
-                      color="GDP", color_continuous_scale=CONTINUOUS_SCALE, title=f"GDP by Income Group → Region ({latest_year})")
-    st.plotly_chart(style_fig(fig, legend=False, height=500), use_container_width=True, key="chart_16")
+    region_trend = fdf.groupby(["Year", "Region"], as_index=False)["GDP Per Capita"].mean()
+    fig = px.line(region_trend, x="Year", y="GDP Per Capita", color="Region", markers=False, color_discrete_sequence=PALETTE,
+                  title="Average GDP Per Capita by Region Over Time")
+    st.plotly_chart(style_fig(fig, height=500), use_container_width=True, key="chart_13")
 
 # -------------------------------------------------------------------------
 # TAB 5 — COUNTRY DEEP DIVE
 # -------------------------------------------------------------------------
 with tab_country:
-    default_country = sel_countries[0] if sel_countries else latest_slice.nlargest(1, "GDP")["Country Name"].iloc[0]
+    default_country = sel_countries[0] if sel_countries else latest_slice.nlargest(1, "GDP Per Capita")["Country Name"].iloc[0]
     st.markdown("<p style='color:#ffffff; font-weight:600; margin-bottom:4px;'>Select a country to explore</p>", unsafe_allow_html=True)
     focus_country = st.selectbox("Select a country to explore", sorted(fdf["Country Name"].unique()),
                                   index=sorted(fdf["Country Name"].unique()).index(default_country) if default_country in fdf["Country Name"].unique() else 0,
                                   label_visibility="collapsed")
 
     cdf = fdf[fdf["Country Name"] == focus_country].sort_values("Year")
-    c_latest = cdf[cdf.Year == cdf.Year.max()].iloc[0]
-    c_earliest = cdf[cdf.Year == cdf.Year.min()].iloc[0]
-    c_growth = (c_latest["GDP"] - c_earliest["GDP"]) / c_earliest["GDP"] * 100 if c_earliest["GDP"] else np.nan
-    peak_year = cdf.loc[cdf["GDP"].idxmax(), "Year"]
-    global_rank = int(latest_slice["GDP"].rank(ascending=False)[latest_slice["Country Name"] == focus_country].iloc[0]) if focus_country in latest_slice["Country Name"].values else None
+    c_latest = cdf.iloc[-1]
+    c_earliest = cdf.iloc[0]
+    c_growth = (c_latest["GDP Per Capita"] - c_earliest["GDP Per Capita"]) / c_earliest["GDP Per Capita"] * 100 if c_earliest["GDP Per Capita"] else np.nan
+    peak_year = int(cdf.loc[cdf["GDP Per Capita"].idxmax(), "Year"])
     pc_rank = int(latest_slice["GDP Per Capita"].rank(ascending=False)[latest_slice["Country Name"] == focus_country].iloc[0]) if focus_country in latest_slice["Country Name"].values else None
 
     insights_box(f"Dynamic Key Findings — {focus_country}", [
-        f"{focus_country}'s GDP grew from <b>{fmt_compact(c_earliest['GDP'])}</b> ({int(c_earliest['Year'])}) to <b>{fmt_compact(c_latest['GDP'])}</b> ({int(c_latest['Year'])}), a change of <b>{c_growth:+.1f}%</b>.",
-        f"GDP per capita stood at <b>{fmt_compact(c_latest['GDP Per Capita'])}</b> in {int(c_latest['Year'])}.",
-        f"Peak GDP within the selected window was reached in <b>{int(peak_year)}</b>.",
+        f"{focus_country}'s GDP per capita grew from <b>{fmt_compact(c_earliest['GDP Per Capita'])}</b> ({int(c_earliest['Year'])}) to <b>{fmt_compact(c_latest['GDP Per Capita'])}</b> ({int(c_latest['Year'])}), a change of <b>{c_growth:+.1f}%</b>.",
+        f"Peak GDP per capita within the selected window was reached in <b>{peak_year}</b>.",
         f"{focus_country} belongs to the <b>{c_latest['Region']}</b> region and is classified as <b>{c_latest['IncomeGroup']}</b>.",
-        f"Global GDP rank (within current filters, {latest_year}): <b>#{global_rank}</b>." if global_rank else "Global GDP rank unavailable for the current filter set.",
         f"Global GDP-per-capita rank (within current filters, {latest_year}): <b>#{pc_rank}</b>." if pc_rank else "GDP-per-capita rank unavailable for the current filter set.",
     ])
 
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        animated_metric(f"GDP ({int(c_latest['Year'])})", numeric=c_latest["GDP"], prefix="$", mode="compact")
-    with k2:
         animated_metric(f"GDP / Capita ({int(c_latest['Year'])})", numeric=c_latest["GDP Per Capita"], prefix="$", mode="compact")
+    with k2:
+        animated_metric(f"Growth since {int(c_earliest['Year'])}", numeric=c_growth, mode="percent", suffix="%")
     with k3:
         animated_metric("Region", value=c_latest["Region"])
     with k4:
         animated_metric("Income Group", value=c_latest["IncomeGroup"])
 
-    fig = px.area(cdf, x="Year", y="GDP", title=f"{focus_country} — GDP Over Time", color_discrete_sequence=[PALETTE[0]])
+    fig = px.area(cdf, x="Year", y="GDP Per Capita", title=f"{focus_country} — GDP Per Capita Over Time", color_discrete_sequence=[PALETTE[0]])
     fig.update_traces(fillcolor="rgba(6,182,212,0.18)", line=dict(width=2.5))
-    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_17")
+    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_14")
 
-    fig = px.line(cdf, x="Year", y="GDP Per Capita", title=f"{focus_country} — GDP Per Capita Over Time",
-                  color_discrete_sequence=[PALETTE[1]], markers=True)
-    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_18")
+    peer_region = latest_slice[latest_slice["Region"] == c_latest["Region"]].nlargest(10, "GDP Per Capita")
+    fig = px.bar(peer_region.sort_values("GDP Per Capita"), x="GDP Per Capita", y="Country Name", orientation="h",
+                 color="GDP Per Capita", color_continuous_scale=CONTINUOUS_SCALE,
+                 title=f"Top GDP Per Capita in {c_latest['Region']} ({latest_year})")
+    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_15")
 
-    peer_region = latest_slice[latest_slice["Region"] == c_latest["Region"]].nlargest(10, "GDP")
-    fig = px.bar(peer_region.sort_values("GDP"), x="GDP", y="Country Name", orientation="h",
-                 color="GDP", color_continuous_scale=CONTINUOUS_SCALE,
-                 title=f"Top Economies in {c_latest['Region']} ({latest_year})")
-    st.plotly_chart(style_fig(fig, legend=False, height=480), use_container_width=True, key="chart_19")
-
-    cdf["pct_change"] = cdf["GDP"].pct_change() * 100
+    cdf["pct_change"] = cdf["GDP Per Capita"].pct_change() * 100
     fig = px.bar(cdf.dropna(subset=["pct_change"]), x="Year", y="pct_change",
-                 title=f"{focus_country} — YoY GDP Growth (%)", color="pct_change",
+                 title=f"{focus_country} — YoY GDP Per Capita Growth (%)", color="pct_change",
                  color_continuous_scale=CONTINUOUS_SCALE)
     fig.add_hline(y=0, line_dash="dot", line_color="rgba(148,163,184,0.4)")
-    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_20")
+    st.plotly_chart(style_fig(fig, legend=False, height=460), use_container_width=True, key="chart_16")
