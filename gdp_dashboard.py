@@ -235,17 +235,21 @@ st.markdown("""
 # =========================================================================
 # DATA LOADING
 # =========================================================================
-@st.cache_data
-def load_data():
+def _find_data_file():
     candidates = glob.glob(os.path.join(SCRIPT_DIR, "data", "*GDP*.xlsx")) + \
                  glob.glob(os.path.join(SCRIPT_DIR, "*GDP*.xlsx"))
     data_file = next((f for f in candidates if "world_gdp_data" in os.path.basename(f).lower()), None)
     if data_file is None and candidates:
         data_file = candidates[0]
-    if data_file is None:
-        st.error("Could not locate the World_GDP_Data.xlsx data file. Please make sure it sits alongside this script (or in a 'data' subfolder).")
-        st.stop()
+    return data_file
 
+
+@st.cache_data
+def load_data(data_file, _mtime):
+    """`_mtime` (file modification time) is included purely so Streamlit's cache
+    automatically invalidates whenever the underlying Excel file is replaced —
+    otherwise swapping in updated data wouldn't take effect without a manual
+    cache clear / app restart, since load_data() would otherwise take no arguments."""
     df = pd.read_excel(data_file, sheet_name="Data")
     df.columns = df.columns.str.strip()
     df["IncomeGroup"] = df["IncomeGroup"].fillna("Unclassified")
@@ -254,7 +258,13 @@ def load_data():
     df["GDP Per Capita"] = pd.to_numeric(df["GDP Per Capita"], errors="coerce")
     return df
 
-df_full = load_data()
+
+_data_file = _find_data_file()
+if _data_file is None:
+    st.error("Could not locate the World_GDP_Data.xlsx data file. Please make sure it sits alongside this script (or in a 'data' subfolder).")
+    st.stop()
+
+df_full = load_data(_data_file, os.path.getmtime(_data_file))
 
 # =========================================================================
 # HELPERS
@@ -497,7 +507,7 @@ if fdf.empty:
 latest_year = int(fdf["Year"].max())
 earliest_year = int(fdf["Year"].min())
 _subtitle_placeholder.markdown(
-    f"<p style='font-size:16px; margin-top:-6px; margin-bottom:26px;'><span style='color:#e2e8f0; opacity:0.65;'>World Bank national accounts data · {fdf['Country Name'].nunique()} countries · {earliest_year}–{latest_year}</span></p>",
+    f"<p style='font-size:16px; margin-top:-6px; margin-bottom:26px;'><span style='color:#e2e8f0; opacity:0.65;'>World Bank national accounts data · {fdf['Country Name'].nunique()} countries · {year_range[0]}–{year_range[1]}</span></p>",
     unsafe_allow_html=True
 )
 latest_slice = fdf[fdf["Year"] == latest_year]
