@@ -112,18 +112,25 @@ st.markdown("""
     }
     .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { height: 6px; }
     .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.4); border-radius: 10px; }
+    .stTabs [data-baseweb="tab"],
+    .stTabs [data-baseweb="tab"] * {
+        color: #ffffff !important;
+    }
     .stTabs [data-baseweb="tab"] {
         flex: 0 0 auto; white-space: nowrap; height: 42px; border-radius: 10px;
-        color: #ffffff; background: transparent; font-weight: 600; padding: 0 18px;
+        background: transparent; font-weight: 600; padding: 0 18px;
         transition: all 0.2s ease;
     }
-    .stTabs [data-baseweb="tab"] p { color: #ffffff !important; }
-    .stTabs [data-baseweb="tab"]:hover {
-        color: var(--accent-bright); background: rgba(6,182,212,0.10);
+    .stTabs [data-baseweb="tab"]:hover,
+    .stTabs [data-baseweb="tab"]:hover * {
+        color: var(--accent-bright) !important; background: rgba(6,182,212,0.10);
+    }
+    .stTabs [aria-selected="true"],
+    .stTabs [aria-selected="true"] * {
+        color: var(--accent-bright) !important;
     }
     .stTabs [aria-selected="true"] {
         background: rgba(27,39,64,0.55) !important; backdrop-filter: blur(10px);
-        color: var(--accent-bright) !important;
         box-shadow: 0 0 0 1px var(--accent-glow), 0 0 18px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.08);
         border: 1px solid var(--accent);
     }
