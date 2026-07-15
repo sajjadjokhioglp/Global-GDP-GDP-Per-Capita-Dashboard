@@ -4,6 +4,7 @@ import base64
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -34,6 +35,27 @@ st.markdown("""
         --accent-bright: #22d3ee;
         --accent-glow: rgba(6,182,212,0.35);
     }
+
+    /* --- Keyframe animations --- */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+    @keyframes chartDrawIn {
+        from { opacity: 0; transform: scale(0.97) translateY(10px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes softPulse {
+        0%, 100% { box-shadow: 0 0 0 rgba(6,182,212,0); }
+        50% { box-shadow: 0 0 22px var(--accent-glow); }
+    }
+
+    /* Page-load fade-in for the whole app content */
+    section.main .block-container { animation: fadeIn 0.5s ease both; }
 
     .stApp {
         background:
@@ -89,21 +111,31 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] {
         flex: 0 0 auto; white-space: nowrap; height: 42px; border-radius: 10px;
         color: var(--text-secondary); background: transparent; font-weight: 600; padding: 0 18px;
+        transition: all 0.2s ease;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        color: var(--accent-bright); background: rgba(6,182,212,0.08);
     }
     .stTabs [aria-selected="true"] {
         background: var(--bg-surface-2) !important; color: var(--accent-bright) !important;
         box-shadow: 0 0 0 1px var(--accent-glow), 0 0 18px var(--accent-glow); border: 1px solid var(--accent);
     }
+    /* Tab-switch fade transition: replays whenever a tab panel remounts */
+    .stTabs [data-baseweb="tab-panel"] { animation: fadeInUp 0.45s ease both; }
 
     /* KPI metric cards */
     div[data-testid="stMetric"] {
         background: linear-gradient(160deg, var(--bg-surface), var(--bg-surface-2));
         border: 1px solid var(--border-subtle); border-radius: 16px; padding: 18px 20px;
-        box-shadow: 0 4px 18px rgba(0,0,0,0.35); transition: all 0.2s ease;
-        overflow: visible;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.35); transition: all 0.25s ease;
+        overflow: visible; animation: fadeInUp 0.5s ease both;
     }
+    div[data-testid="column"]:nth-of-type(1) div[data-testid="stMetric"] { animation-delay: 0.02s; }
+    div[data-testid="column"]:nth-of-type(2) div[data-testid="stMetric"] { animation-delay: 0.10s; }
+    div[data-testid="column"]:nth-of-type(3) div[data-testid="stMetric"] { animation-delay: 0.18s; }
+    div[data-testid="column"]:nth-of-type(4) div[data-testid="stMetric"] { animation-delay: 0.26s; }
     div[data-testid="stMetric"]:hover {
-        border-color: var(--accent); box-shadow: 0 4px 24px var(--accent-glow); transform: translateY(-2px);
+        border-color: var(--accent); box-shadow: 0 6px 28px var(--accent-glow); transform: translateY(-4px) scale(1.01);
     }
     div[data-testid="stMetric"] label { color: var(--text-secondary) !important; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; }
     div[data-testid="stMetricValue"] {
@@ -113,12 +145,18 @@ st.markdown("""
         word-break: break-word;
         line-height: 1.25;
         font-size: 1.6rem !important;
+        transition: color 0.2s ease;
     }
 
     /* Chart cards */
     div[data-testid="stPlotlyChart"] {
         background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 16px;
         padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+        animation: chartDrawIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    div[data-testid="stPlotlyChart"]:hover {
+        border-color: var(--accent); box-shadow: 0 6px 26px var(--accent-glow); transform: translateY(-3px);
     }
 
     /* Insights box */
@@ -127,25 +165,32 @@ st.markdown("""
         border: 1px solid var(--border-subtle); border-left: 4px solid var(--accent);
         border-radius: 14px; padding: 20px 24px; margin-bottom: 22px;
         backdrop-filter: blur(6px);
+        animation: fadeInUp 0.5s ease both;
+        transition: box-shadow 0.25s ease, border-color 0.25s ease;
     }
+    .insights-box:hover { box-shadow: 0 4px 22px rgba(6,182,212,0.15); border-left-color: var(--accent-bright); }
     .insights-box h4 { margin-top: 0; color: var(--accent-bright) !important; font-size: 1.05rem; }
     .insights-box ul { margin: 8px 0 0 0; padding-left: 20px; }
     .insights-box li { color: var(--text-primary); margin-bottom: 7px; line-height: 1.5; font-size: 0.95rem; }
     .insights-box li b { color: var(--accent-bright); }
 
     /* Dark HTML table (Raw Data tab) */
-    .dark-table-wrapper { overflow: auto; border: 1px solid var(--border-subtle); border-radius: 12px; }
+    .dark-table-wrapper { overflow: auto; border: 1px solid var(--border-subtle); border-radius: 12px; animation: fadeIn 0.5s ease both; }
     table.dark-table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
     table.dark-table thead th {
         position: sticky; top: 0; background: var(--bg-surface-2); color: var(--accent-bright);
         text-align: left; padding: 10px 14px; border-bottom: 2px solid var(--accent); z-index: 1;
         text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.04em;
     }
-    table.dark-table tbody td { padding: 8px 14px; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); }
+    table.dark-table tbody td { padding: 8px 14px; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease; }
     table.dark-table tbody tr:hover { background: var(--bg-surface-2); }
 
     /* Multiselect chips */
-    span[data-baseweb="tag"] { background: var(--accent) !important; color: #04202a !important; font-weight: 600; }
+    span[data-baseweb="tag"] {
+        background: var(--accent) !important; color: #04202a !important; font-weight: 600;
+        transition: transform 0.15s ease, box-shadow 0.15s ease; animation: fadeInUp 0.3s ease both;
+    }
+    span[data-baseweb="tag"]:hover { transform: translateY(-1px); box-shadow: 0 3px 10px var(--accent-glow); }
 
     /* Captions / small text */
     .stCaption, .css-1629p8f { color: var(--text-secondary) !important; }
@@ -153,7 +198,7 @@ st.markdown("""
     /* Download button */
     .stDownloadButton button {
         background: var(--bg-surface-2); color: var(--accent-bright); border: 1px solid var(--accent);
-        border-radius: 10px; font-weight: 600;
+        border-radius: 10px; font-weight: 600; transition: all 0.2s ease;
     }
     .stDownloadButton button:hover { background: var(--accent); color: #04202a; box-shadow: 0 0 16px var(--accent-glow); }
     </style>
@@ -253,6 +298,79 @@ def insights_box(title, points):
     st.markdown(html, unsafe_allow_html=True)
 
 
+_kpi_seq = {"n": 0}
+
+def animated_metric(label, numeric=None, value=None, prefix="", suffix="", mode="compact", height=128):
+    """Render a themed KPI card. If `numeric` is given, the number count-up-animates from 0 to its
+    final value on render (formatted per `mode`: 'compact' -> $1.2T/B/M/K, 'percent' -> +12.3%,
+    'int' -> plain integer with thousands separators). If only `value` is given, it's shown as static text."""
+    _kpi_seq["n"] += 1
+    uid = f"kpi_{_kpi_seq['n']}"
+
+    use_counter = numeric is not None and pd.notna(numeric)
+    if use_counter:
+        value_inner = f'<div class="kpi-value" id="{uid}">0</div>'
+        script = f"""<script>
+        (function() {{
+            var el = document.getElementById("{uid}");
+            var target = {float(numeric)};
+            var prefix = "{prefix}"; var suffix = "{suffix}"; var mode = "{mode}";
+            function fmt(n) {{
+                if (mode === "percent") {{
+                    var s = n >= 0 ? "+" : "";
+                    return s + n.toFixed(1) + suffix;
+                }}
+                if (mode === "int") {{
+                    return prefix + Math.round(n).toLocaleString() + suffix;
+                }}
+                var sign = n < 0 ? "-" : ""; n = Math.abs(n); var out;
+                if (n >= 1e12) out = (n/1e12).toFixed(2) + "T";
+                else if (n >= 1e9) out = (n/1e9).toFixed(2) + "B";
+                else if (n >= 1e6) out = (n/1e6).toFixed(1) + "M";
+                else if (n >= 1e3) out = (n/1e3).toFixed(1) + "K";
+                else out = n.toFixed(0);
+                return sign + prefix + out + suffix;
+            }}
+            var start = null; var duration = 1100;
+            function step(ts) {{
+                if (!start) start = ts;
+                var progress = Math.min((ts - start) / duration, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = fmt(target * eased);
+                if (progress < 1) requestAnimationFrame(step);
+                else el.textContent = fmt(target);
+            }}
+            requestAnimationFrame(step);
+        }})();
+        </script>"""
+    else:
+        display_text = value if value is not None else "N/A"
+        value_inner = f'<div class="kpi-value" id="{uid}">{display_text}</div>'
+        script = ""
+
+    html = f"""
+    <div class="kpi-card">
+        <style>
+            @keyframes fadeInUp {{ from {{opacity:0; transform:translateY(14px);}} to {{opacity:1; transform:translateY(0);}} }}
+            html, body {{ margin:0; padding:0; background:transparent; }}
+            .kpi-card {{
+                font-family:'Inter',sans-serif; background:linear-gradient(160deg,#131c30,#1b2740);
+                border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px 20px;
+                box-shadow:0 4px 18px rgba(0,0,0,0.35); animation: fadeInUp 0.5s ease both;
+                transition: all 0.25s ease; box-sizing:border-box; height:100px;
+            }}
+            .kpi-card:hover {{ border-color:#06b6d4; box-shadow:0 6px 28px rgba(6,182,212,0.35); transform:translateY(-4px) scale(1.01); }}
+            .kpi-label {{ color:#94a3b8; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.05em; font-weight:600; margin-bottom:6px; }}
+            .kpi-value {{ color:#22d3ee; font-size:1.6rem; font-weight:700; line-height:1.25; word-break:break-word; }}
+        </style>
+        <div class="kpi-label">{label}</div>
+        {value_inner}
+        {script}
+    </div>
+    """
+    components.html(html, height=height, scrolling=False)
+
+
 PALETTE = px.colors.qualitative.Vivid
 CONTINUOUS_SCALE = "Tealgrn"
 
@@ -267,9 +385,9 @@ if _logo_path:
     with open(_logo_path, "rb") as f:
         _logo_b64 = base64.b64encode(f.read()).decode()
     _ext = "png" if _logo_path.lower().endswith("png") else "jpeg"
-    _logo_html = f'<div style="background:#ffffff; padding:8px 10px; border-radius:14px; box-shadow:0 6px 20px rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; display:flex; align-items:center;"><img src="data:image/{_ext};base64,{_logo_b64}" style="height:58px; display:block; border-radius:4px;"></div>'
+    _logo_html = f'<div style="background:#ffffff; padding:8px 10px; border-radius:14px; box-shadow:0 6px 20px rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.15); flex-shrink:0; display:flex; align-items:center; animation: softPulse 3.5s ease-in-out infinite;"><img src="data:image/{_ext};base64,{_logo_b64}" style="height:58px; display:block; border-radius:4px;"></div>'
 
-_header_html = f'<div style="display:flex; align-items:center; gap:20px; margin-bottom:4px;">{_logo_html}<div><h1 style="font-weight:700; color:#f1f5f9; margin:0; line-height:1.2; font-size:2.2rem;">🌐 Global GDP &amp; GDP Per Capita Dashboard</h1></div></div>'
+_header_html = f'<div style="display:flex; align-items:center; gap:20px; margin-bottom:4px; animation: fadeInUp 0.6s ease both;">{_logo_html}<div><h1 style="font-weight:700; color:#f1f5f9; margin:0; line-height:1.2; font-size:2.2rem;">🌐 Global GDP &amp; GDP Per Capita Dashboard</h1></div></div>'
 st.markdown(_header_html, unsafe_allow_html=True)
 _subtitle_placeholder = st.empty()
 _subtitle_placeholder.markdown(
@@ -385,10 +503,14 @@ with tab_overview:
     ])
 
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric(f"Total GDP ({latest_year})", fmt_compact(total_gdp_latest))
-    k2.metric(f"Avg GDP / Capita ({latest_year})", fmt_compact(avg_gdppc_latest))
-    k3.metric("Countries in View", n_countries)
-    k4.metric(f"Growth since {earliest_year}", f"{growth_pct:+.1f}%")
+    with k1:
+        animated_metric(f"Total GDP ({latest_year})", numeric=total_gdp_latest, prefix="$", mode="compact")
+    with k2:
+        animated_metric(f"Avg GDP / Capita ({latest_year})", numeric=avg_gdppc_latest, prefix="$", mode="compact")
+    with k3:
+        animated_metric("Countries in View", numeric=n_countries, mode="int")
+    with k4:
+        animated_metric(f"Growth since {earliest_year}", numeric=growth_pct, mode="percent", suffix="%")
 
     world_trend = fdf.groupby("Year", as_index=False)["GDP"].sum()
     fig = px.area(world_trend, x="Year", y="GDP", title="Combined GDP Over Time", color_discrete_sequence=[PALETTE[0]])
@@ -572,10 +694,14 @@ with tab_country:
     ])
 
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric(f"GDP ({int(c_latest['Year'])})", fmt_compact(c_latest["GDP"]))
-    k2.metric(f"GDP / Capita ({int(c_latest['Year'])})", fmt_compact(c_latest["GDP Per Capita"]))
-    k3.metric("Region", c_latest["Region"])
-    k4.metric("Income Group", c_latest["IncomeGroup"])
+    with k1:
+        animated_metric(f"GDP ({int(c_latest['Year'])})", numeric=c_latest["GDP"], prefix="$", mode="compact")
+    with k2:
+        animated_metric(f"GDP / Capita ({int(c_latest['Year'])})", numeric=c_latest["GDP Per Capita"], prefix="$", mode="compact")
+    with k3:
+        animated_metric("Region", value=c_latest["Region"])
+    with k4:
+        animated_metric("Income Group", value=c_latest["IncomeGroup"])
 
     fig = px.area(cdf, x="Year", y="GDP", title=f"{focus_country} — GDP Over Time", color_discrete_sequence=[PALETTE[0]])
     fig.update_traces(fillcolor="rgba(6,182,212,0.18)", line=dict(width=2.5))
